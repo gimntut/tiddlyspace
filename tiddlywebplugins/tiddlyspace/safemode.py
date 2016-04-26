@@ -4,13 +4,14 @@ Code for recovering from bad data in a space.
 
 from datetime import datetime
 
+from httpexceptor import HTTP403, HTTP404
+
 from tiddlyweb import control
 from tiddlyweb.model.bag import Bag
 from tiddlyweb.model.collections import Tiddlers
 from tiddlyweb.model.recipe import Recipe
 from tiddlyweb.model.tiddler import Tiddler
 from tiddlyweb.store import NoBagError, NoRecipeError, NoTiddlerError
-from tiddlyweb.web.http import HTTP403, HTTP404
 from tiddlyweb.web.sendtiddlers import send_tiddlers
 from tiddlyweb.web.util import get_serialize_type
 
@@ -114,10 +115,6 @@ def _send_safe_mode(environ, start_response):
     Send a form that initiates safe_mode by asking
     the user to confirm that they want it and then
     POSTing back to the same URI.
-
-    XXX: This should maybe be replaced with a tiddler.
-    However, then that tiddler will be visible in spaces
-    and we don't want that.
     """
     environ['tiddlyweb.title'] = 'Confirm Safe Mode'
     now = datetime.utcnow().strftime('%Y%m%d%H')

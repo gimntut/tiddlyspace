@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+{% block htmltag %}
+<html>
+{% endblock %}
+<!-- this is the clean1 template -->
+    <head>
+        <meta charset="UTF-8">
+        <title>{{ title }} - TiddlySpace</title>
+        <link rel="stylesheet" href="/bags/common/tiddlers/normalize.css">
+        <!--[if lt IE 9]><script src="/bags/common/tiddlers/html5.js"></script><![endif]-->
+        {%- for link in css -%}
+        <link rel="stylesheet" href="{{ link }}" type="text/css" />
+        {%- endfor -%}
+        {% block links %}
+        {% endblock %}
+        {% block meta %}
+        {% endblock %}
+        <meta name="viewport" content="width=device-width"> 
+    </head>
+    <body>
+
+        <header>
+            {% block header %}
+            {% endblock %}
+        </header>
+
+        {% block content %}
+        {% endblock %}
+
+        <footer>
+        Brought to you by <a href="{{ original_server_host }}">TiddlySpace</a>.
+        </footer>
+
+        {% block scripts %}
+        {% endblock %}
+        {%- for link in js -%}
+        <script src="{{ link }}"></script>
+        {%- endfor -%}
+        <script src="/bags/common/tiddlers/backstage.js"></script>
+    </body>
+</html>

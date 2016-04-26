@@ -6,12 +6,16 @@ listing, creation, subscription, etc.
 import urllib
 import simplejson
 
+from httpexceptor import HTTP403, HTTP404, HTTP409
+
 from tiddlyweb.model.bag import Bag
 from tiddlyweb.model.recipe import Recipe
+from tiddlyweb.model.tiddler import Tiddler
 from tiddlyweb.model.user import User
 from tiddlyweb.model.policy import Policy
-from tiddlyweb.store import NoRecipeError, NoBagError, NoUserError
-from tiddlyweb.web.http import HTTP403, HTTP404, HTTP409
+from tiddlyweb.store import (StoreError, NoRecipeError, NoBagError,
+        NoUserError)
+from tiddlyweb.web.util import get_route_value
 
 from tiddlywebplugins.utils import require_any_user
 
@@ -24,6 +28,11 @@ try:
 except AttributeError:  # Python 2.6+
     JSONDecodeError = ValueError
 
+GETTING_STARTED_TIDDLER = {
+        'title': 'GettingStarted',
+        'bag': 'system-info_public'
+}
+
 
 def add_spaces_routes(selector):
     """
@@ -34,8 +43,7 @@ def add_spaces_routes(selector):
     selector.add('/spaces/{space_name:segment}',
             GET=confirm_space,  # confirm space exists
             PUT=create_space,  # create a new space
-            POST=subscribe_space,  # subscribe a space to this space
-            )
+            POST=subscribe_space)  # subscribe a space to this space
     selector.add('/spaces/{space_name:segment}/members',  # list space members
             GET=list_space_members)
     selector.add('/spaces/{space_name:segment}/members/{user_name:segment}',
@@ -51,8 +59,8 @@ def add_space_member(environ, start_response):
     raise 404.
     """
     store = environ['tiddlyweb.store']
-    space_name = environ['wsgiorg.routing_args'][1]['space_name']
-    user_name = environ['wsgiorg.routing_args'][1]['user_name']
+    space_name = get_route_value(environ, 'space_name')
+    user_name = get_route_value(environ, 'user_name')
     current_user = environ['tiddlyweb.usersign']
 
     _same_space_required(environ, space_name)
@@ -105,7 +113,7 @@ def confirm_space(environ, start_response):
     not, raise 404.
     """
     store = environ['tiddlyweb.store']
-    space_name = environ['wsgiorg.routing_args'][1]['space_name']
+    space_name = get_route_value(environ, 'space_name')
     try:
         space = Space(space_name)
         store.get(Recipe(space.public_recipe()))
@@ -122,8 +130,7 @@ def create_space(environ, start_response):
     Create a space if it does not yet exists. If it does
     raise 409.
     """
-    space_name = environ['wsgiorg.routing_args'][1]['space_name']
-    space_name = urllib.unquote(space_name).decode('UTF-8')
+    space_name = get_route_value(environ, 'space_name')
     _validate_space_name(environ, space_name)
     return _create_space(environ, start_response, space_name)
 
@@ -135,8 +142,8 @@ def delete_space_member(environ, start_response):
     nothing.
     """
     store = environ['tiddlyweb.store']
-    space_name = environ['wsgiorg.routing_args'][1]['space_name']
-    user_name = environ['wsgiorg.routing_args'][1]['user_name']
+    space_name = get_route_value(environ, 'space_name')
+    user_name = get_route_value(environ, 'user_name')
     current_user = environ['tiddlyweb.usersign']
 
     _same_space_required(environ, space_name)
@@ -189,7 +196,7 @@ def list_space_members(environ, start_response):
     to list the members.
     """
     store = environ['tiddlyweb.store']
-    space_name = environ['wsgiorg.routing_args'][1]['space_name']
+    space_name = get_route_value(environ, 'space_name')
     current_user = environ['tiddlyweb.usersign']
     try:
         space = Space(space_name)
@@ -217,6 +224,22 @@ def make_space(space_name, store, member):
         if Space.bag_is_public(bag_name):
             bag.policy.read = []
         store.put(bag)
+
+    info_tiddler = Tiddler('SiteInfo', space.public_bag())
+    info_tiddler.text = 'Space %s' % space_name
+    info_tiddler.modifier = store.environ.get('tiddlyweb.usersign',
+            {}).get('name', 'GUEST')
+    store.put(info_tiddler)
+
+    # Duplicate GettingStarted into public bag.
+    getting_started_tiddler = Tiddler(GETTING_STARTED_TIDDLER['title'],
+            GETTING_STARTED_TIDDLER['bag'])
+    try:
+        getting_started_tiddler = store.get(getting_started_tiddler)
+        getting_started_tiddler.bag = space.public_bag()
+        store.put(getting_started_tiddler)
+    except StoreError:
+        pass
 
     public_recipe = Recipe(space.public_recipe())
     public_recipe.set_recipe(space.public_recipe_list())
@@ -265,7 +288,7 @@ def subscribe_space(environ, start_response):
     Raise 409 if a space in the JSON does not exist.
     """
     store = environ['tiddlyweb.store']
-    space_name = environ['wsgiorg.routing_args'][1]['space_name']
+    space_name = get_route_value(environ, 'space_name')
     current_user = environ['tiddlyweb.usersign']
     try:
         current_space = Space(space_name)
@@ -290,7 +313,7 @@ def subscribe_space(environ, start_response):
     _do_subscriptions(environ, subscriptions, public_recipe_list,
             private_recipe_list, store)
     _do_unsubscriptions(space_name, unsubscriptions, public_recipe_list,
-            private_recipe_list, store)
+            private_recipe_list)
 
     public_recipe.set_recipe(public_recipe_list)
     store.put(public_recipe)
@@ -322,7 +345,7 @@ def _create_space(environ, start_response, space_name):
             environ['tiddlyweb.usersign']['name'])
     start_response('201 Created', [
         ('Location', space_uri(environ, space_name)),
-        ])
+    ])
     return ['']
 
 
@@ -351,7 +374,7 @@ def _do_subscriptions(environ, subscriptions, public_recipe_list,
 
 
 def _do_unsubscriptions(space_name, unsubscriptions, public_recipe_list,
-        private_recipe_list, store):
+        private_recipe_list):
     """
     Remove unsubscriptions from the space represented by
     public_recipe_list and private_recipe_list.

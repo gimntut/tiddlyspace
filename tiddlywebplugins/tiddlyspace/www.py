@@ -3,7 +3,6 @@ Set up the routes and WSGI Middleware used by TiddlySpace.
 """
 
 from tiddlyweb.web.negotiate import Negotiate
-from tiddlyweb.web.wsgi import HTMLPresenter
 
 from tiddlywebplugins.prettyerror import PrettyHTTPExceptor
 from tiddlywebplugins.utils import replace_handler
@@ -15,7 +14,6 @@ from tiddlywebplugins.tiddlyspace.serversettings import ServerSettings
 from tiddlywebplugins.tiddlyspace.handler import (home, friendly_uri,
         get_identities, get_space_tiddlers)
 from tiddlywebplugins.tiddlyspace.profiles import add_profile_routes
-from tiddlywebplugins.tiddlyspace.repudiator import RepudiatorController
 from tiddlywebplugins.tiddlyspace.safemode import safe_mode
 from tiddlywebplugins.tiddlyspace.spaces import add_spaces_routes
 
@@ -47,17 +45,11 @@ def establish_www(config):
         config['server_request_filters'].append(CSRFProtector)
 
     if ServerSettings not in config['server_request_filters']:
-        config['server_request_filters'].append(ServerSettings)
+        config['server_request_filters'].insert(
+                config['server_request_filters'].
+                index(ControlView), ServerSettings)
 
     if AllowOrigin not in config['server_response_filters']:
         config['server_response_filters'].insert(
                 config['server_response_filters'].
                 index(PrettyHTTPExceptor) + 1, AllowOrigin)
-
-    if RepudiatorController not in config['server_response_filters']:
-        config['server_response_filters'].insert(
-                config['server_response_filters'].
-                index(PrettyHTTPExceptor) + 1, RepudiatorController)
-
-    if HTMLPresenter in config['server_response_filters']:
-        config['server_response_filters'].remove(HTMLPresenter)

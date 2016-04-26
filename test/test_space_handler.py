@@ -18,11 +18,11 @@ import wsgi_intercept
 import py.test
 
 from wsgi_intercept import httplib2_intercept
+from httpexceptor import HTTP409
 
 from tiddlyweb.model.bag import Bag
 from tiddlyweb.model.recipe import Recipe
 from tiddlyweb.model.user import User
-from tiddlyweb.web.http import HTTP409
 
 from tiddlywebplugins.tiddlyspace.spaces import _update_policy, _make_policy
 
@@ -52,11 +52,6 @@ def setup_module(module):
     user = User('psd')
     user.set_password('cat')
     module.store.put(user)
-
-
-def teardown_module(module):
-    import os
-    os.chdir('..')
 
 
 def test_spaces_list():
@@ -151,6 +146,17 @@ def test_create_space():
     response['status'] == '200'
     info = simplejson.loads(content)
     assert info == ['cdent'], content
+
+    response, content = http.request('http://extra.0.0.0.0:8080/bags/extra_public/tiddlers/SiteInfo.json')
+    assert response['status'] == '200'
+    info = simplejson.loads(content)
+    assert 'Space extra' in info['text']
+
+    response, content = http.request(
+            'http://extra.0.0.0.0:8080/GettingStarted.json')
+    assert response['status'] == '200'
+    info = simplejson.loads(content)
+    assert info['bag'] == 'extra_public'
 
     bag = store.get(Bag('extra_public'))
     assert bag.policy.owner == 'cdent'

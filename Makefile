@@ -1,71 +1,133 @@
-.PHONY: test remotes jslib qunit dist release deploy pypi dev clean purge
+.PHONY: test remotes jslib qunit get_phantomjs get_jshint jshint jstest pytest dist release deploy pypi dev clean purge tagv
 
-wrap_jslib = curl -L -s $(2) | \
-	{ \
-		echo "/***"; echo $(2); echo "***/"; \
-		echo "//{{{"; cat -; echo "//}}}"; \
+wrap_jslib = { \
+		echo "/***" &&  echo $(2) && echo "***/" && \
+		echo "//{{{" && \
+		curl --location -f -s $(2) && \
+		echo "//}}}"; \
 	} > $(1)
 
-test:
+download = \
+	curl --location -f --output $(1) --time-cond $(1) --remote-time $(2)
+
+pytest:
 	py.test -x test
 
+tagv: version = $(shell python -c 'import mangler; \
+	import tiddlywebplugins.tiddlyspace; \
+	print "v" + tiddlywebplugins.tiddlyspace.__version__')
+
+tagv:
+	git tag -a -m $(version) $(version) && \
+		git push origin master --tags
+
+test: pytest jstest
+
 tiddlywiki:
-	mkdir src/externals || true
 	mkdir tiddlywebplugins/tiddlyspace/resources || true
-	wget http://tiddlywiki.com/beta/empty.html \
-		-O tiddlywebplugins/tiddlyspace/resources/beta.html
-	wget http://tiddlywiki.com/alpha/empty.html \
-		-O tiddlywebplugins/tiddlyspace/resources/alpha.html
-	wget http://tiddlywiki.com/alpha/tiddlywiki_externaljs_tiddlyspace.html \
-		-O tiddlywebplugins/tiddlyspace/resources/external_alpha.html
-	wget http://tiddlywiki.com/alpha/jquery.js \
-		-O src/externals/alpha_jquery.js.js
-	wget http://tiddlywiki.com/alpha/jQuery.twStylesheet.js \
-		-O src/externals/alpha_jQuery.twStylesheet.js.js
-	wget http://tiddlywiki.com/alpha/twcore.js \
-		-O src/externals/alpha_twcore.js.js
+	$(call download, "tiddlywebplugins/tiddlyspace/resources/beta.html", \
+		"http://classic.tiddlywiki.com/beta/empty.html")
+	$(call download, "tiddlywebplugins/tiddlyspace/resources/external_beta.html", \
+		"http://classic.tiddlywiki.com/beta/tiddlywiki_externaljs_tiddlyspace.html")
+	$(call download, "src/externals/beta_jquery.js.js", \
+		"http://classic.tiddlywiki.com/beta/jquery.js")
+	$(call download, "src/externals/beta_jQuery.twStylesheet.js.js", \
+		"http://classic.tiddlywiki.com/beta/jQuery.twStylesheet.js")
+	$(call download, "src/externals/beta_twcore.js.js", \
+		"http://classic.tiddlywiki.com/beta/twcore.js")
+	$(call download, "tiddlywebplugins/tiddlyspace/resources/external.html.wrongbag", \
+		"http://classic.tiddlywiki.com/tiddlywiki_externaljs_tiddlyspace.html")
+	$(call download, "src/externals/jQuery.twStylesheet.js.js", \
+		"http://classic.tiddlywiki.com/jQuery.twStylesheet.js")
+	$(call download, "src/externals/twcore.js.js", \
+		"http://classic.tiddlywiki.com/twcore.js")
+	$(call download, "src/externals/twjquery.js.js", \
+		"http://classic.tiddlywiki.com/jquery.js")
+	# Fix up path to jquery to avoid collision with main hosted
+	# jquery.
+	sed -e 's|/bags/common/tiddlers/jquery.js|/bags/common/tiddlers/twjquery.js|;' < \
+		tiddlywebplugins/tiddlyspace/resources/external.html.wrongbag > \
+		tiddlywebplugins/tiddlyspace/resources/external.html && \
+		rm tiddlywebplugins/tiddlyspace/resources/external.html.wrongbag
 
 
-remotes: tiddlywiki jslib
-	./cacher
+remotes: tiddlywiki jslib csslib
+	twibuilder tiddlywebplugins.tiddlyspace
 
-jslib: qunit
-	$(call wrap_jslib, src/lib/chrjs.js, \
-		https://github.com/tiddlyweb/chrjs/raw/master/main.js)
-	$(call wrap_jslib, src/lib/chrjs.users.js, \
-		https://github.com/tiddlyweb/chrjs/raw/master/users.js)
-	$(call wrap_jslib, src/lib/jquery.js.js, \
-		http://code.jquery.com/jquery.min.js)
-	$(call wrap_jslib, src/lib/ts.js.js, \
-		https://raw.github.com/TiddlySpace/ts.js/master/src/ts.js)
-	$(call wrap_jslib, src/lib/chrjs-store.js.js, \
-		https://raw.github.com/bengillies/chrjs.store/master/dist/chrjs-store-latest.js)
-	$(call wrap_jslib, src/lib/bookmark_bubble.js.js, \
-		http://mobile-bookmark-bubble.googlecode.com/hg/bookmark_bubble.js)
-	$(call wrap_jslib, src/lib/jquery-json.js.js, \
-		http://jquery-json.googlecode.com/files/jquery.json-2.3.min.js)
-	$(call wrap_jslib, src/lib/jquery-form.js.js, \
-		https://raw.github.com/malsup/form/master/jquery.form.js)
+jslib: qunit remotejs
+
+csslib:
+	$(call download, "src/lib/normalize.css", \
+		"https://raw.github.com/necolas/normalize.css/master/normalize.css")
+
+remotejs:
+	$(call wrap_jslib, "src/lib/chrjs.js", \
+		"https://raw.github.com/tiddlyweb/chrjs/master/main.js")
+	$(call wrap_jslib, "src/lib/chrjs.users.js", \
+		"https://raw.github.com/tiddlyweb/chrjs/master/users.js")
+	$(call wrap_jslib, "src/lib/jquery.js.js", \
+		"http://code.jquery.com/jquery.min.js")
+	$(call wrap_jslib, "src/lib/ts.js.js", \
+		"https://raw.github.com/TiddlySpace/ts.js/master/src/ts.js")
+	$(call wrap_jslib, "src/lib/chrjs-store.js.js", \
+		"https://raw.github.com/bengillies/chrjs.store/master/dist/chrjs-store-latest.js")
+	$(call wrap_jslib, "src/lib/bookmark_bubble.js.js", \
+		"http://mobile-bookmark-bubble.googlecode.com/hg/bookmark_bubble.js")
+	$(call wrap_jslib, "src/lib/jquery-json.js.js", \
+		"http://jquery-json.googlecode.com/files/jquery.json-2.3.min.js")
+	$(call wrap_jslib, "src/lib/jquery-form.js.js", \
+		"http://malsup.github.io/jquery.form.js")
+	$(call wrap_jslib, "src/lib/jquery.timeago.js.js", \
+		"http://timeago.yarp.com/jquery.timeago.js")
+	$(call wrap_jslib, "src/lib/html5.js.js", \
+		"http://html5shiv.googlecode.com/svn/trunk/html5.js")
 
 qunit:
 	mkdir -p src/test/qunit
 	mkdir -p src/test/lib
-	curl -Lo src/test/qunit/qunit.js \
-		https://github.com/jquery/qunit/raw/master/qunit/qunit.js
-	curl -Lo src/test/qunit/qunit.css \
-		https://github.com/jquery/qunit/raw/master/qunit/qunit.css
-	curl -Lo src/test/lib/jquery.js \
-		http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.js
-	curl -Lo src/test/lib/jquery-json.js \
-		http://jquery-json.googlecode.com/files/jquery.json-2.2.js
+	cp src/lib/json2.js.js src/test/lib/json2.js
+	$(call download, "src/test/qunit/qunit.js", \
+		"http://code.jquery.com/qunit/qunit-1.12.0.js")
+	$(call download, "src/test/qunit/qunit.css", \
+		"http://code.jquery.com/qunit/qunit-1.12.0.css")
+	$(call download, "src/test/lib/jquery.js", \
+		"http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js")
+	$(call download, "src/test/lib/jquery-json.js", \
+		"http://jquery-json.googlecode.com/files/jquery.json-2.2.js")
+	$(call download, "src/test/lib/jquery.mockjax.js", \
+		"https://raw.github.com/appendto/jquery-mockjax/master/jquery.mockjax.js")
+	$(call download, "src/test/run-qunit.js", \
+		"https://raw.github.com/ariya/phantomjs/1.6/examples/run-qunit.js")
+
+get_phantomjs:
+	npm install -g phantomjs
+
+jstest:
+	phantomjs src/test/run-qunit.js src/test/index.html
+
+get_jshint:
+	npm install -g jshint
+
+jshint:
+	jshint src/**/*.js
+
+saucelabs_deps:
+	npm install -g grunt-cli
+	npm install
+
+saucelabs_test:
+	grunt test
+
+jstest_browser:
+	grunt dev
 
 dist: clean remotes test
 	python setup.py sdist
 
-release: dist pypi
+release: tagv dist pypi
 
 deploy: release
-	./deploy.sh $(ARGS)
+	@echo "Go to tiddlyspace.com to run tsupdate."
 
 pypi: test
 	python setup.py sdist upload
@@ -91,7 +153,7 @@ clean:
 	rm -rf build || true
 	rm -rf *.egg-info || true
 	rm -rf tiddlywebplugins/tiddlyspace/resources || true
-	rm -f src/externals/* || true
+	rm -f src/externals/*js || true
 	rm -r test_instance || true
 
 purge: clean

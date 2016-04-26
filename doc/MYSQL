@@ -1,29 +1,26 @@
 TiddlySpace uses MySQL as its storage. Therefore it requires:
 
 * tiddlywebplugins.mysql3
-* tiddlywebplugins.sqlalchemy
+* tiddlywebplugins.sqlalchemy3
 * pyparsing
 * sqlalchemy
 * MySQL-Python
 
-All of which are available from PyPI.
+Also required, of course, is a version of MySQL itself. If your operating
+system includes its own packaging of mysql, then use that. Otherwise see
+http://www.mysql.com/downloads/ or consider MariaDB. As of April 2013
+the main tiddlyspace.com server is using MariaDB.
 
-Also required, of course, is MySQL itself. If your operating system
-includes its own packaging of mysql, then use that. Otherwise see
-http://www.mysql.com/downloads/
+Note that a version of mysql 5.5 or beyond is required for full unicode
+support.
 
-Update the global my.cnf to add to the [mysqld] section:
+All of the Python modules are available from PyPI. Please read the
+README and docs associated with tiddlywebplugins.mysql3 before attempting
+to set up MySQL for TiddlySpace. This description may also be useful:
 
-   ft_min_word_len = 3
-   ft_stopword_file = ''
+    http://tiddlyweb.tiddlyspace.com/Hosting%20Your%20Own%20TiddlySpace
 
-This is required for the fulltext index to work correctly.
-
-my.cnf is often in /etc/mysql/my.cnf or /etc/my.cnf
-
-These days tiddlywebplugins.mysql3 requires InnoDB for most tables,
-and MyISAM for the text table (for fulltext indexing). Earlier versions
-used just MyISAM.
+TiddlySpace uses InnoDB for all tables.
 
 You will need to create two databases:
 
@@ -36,26 +33,19 @@ documentation, tutorials, etc.
 
 TiddlySpace has a default store configuration of:
 
-    'server_store': ['tiddlywebplugins.mysql3', {
-        'db_config': 'mysql:///tiddlyspace?charset=utf8&use_unicode=0'}],
+    'server_store': ['tiddlywebplugins.tiddlyspace.store', {
+        'db_config': 'mysql:///tiddlyspace?charset=utf8mb4'}],
 
 which defaults to using whoever the current user is.
 
 On the deployed server this is changed to:
 
     'server_store': ['tiddlywebplugins.caching', {}],
-    'cached_store': ['tiddlywebplugins.mysql3', {
-        'db_config': 'mysql://tiddlyweb@localhost/tiddlyspace?charset=utf8&use_unicode=0'}],
-    'indexer': 'tiddlywebplugins.mysql',
+    'cached_store': ['tiddlywebplugins.tiddlyspace.store', {
+        'db_config': 'mysql://tiddlyweb@localhost/tiddlyspace?charset=utf8mb4'}],
 
 which uses 'tiddlyweb' as the user.
 
-To enable fulltext indexing for searches without fields (compare:
-
-* /search?q=GettingStarted        <= no field
-* /search?q=title:GettingStarted <= field
-
-) once the database is up and running do:
-
-echo "CREATE FULLTEXT INDEX tiddlytext ON text(text);" | \
-    mysql tiddlyspace
+(The fulltext indexing faculties that were formerly described in this 
+document are not provided by tiddlywebplugins.whoosher at the /hsearch
+URI.)

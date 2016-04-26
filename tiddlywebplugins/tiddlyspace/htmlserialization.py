@@ -8,7 +8,7 @@ from tiddlyweb.model.policy import PermissionsError
 from tiddlyweb.model.recipe import Recipe
 from tiddlyweb.serializations.html import Serialization as HTMLSerialization
 from tiddlyweb.wikitext import render_wikitext
-from tiddlyweb.web.util import encode_name, tiddler_url, get_route_value
+from tiddlyweb.web.util import encode_name, tiddler_url
 
 from tiddlywebplugins.tiddlyspace.space import Space
 from tiddlywebplugins.tiddlyspace.spaces import space_uri
@@ -58,31 +58,43 @@ class Serialization(HTMLSerialization):
         """
         tiddlers_url = (self.environ.get('SCRIPT_NAME', '')
                 + self.environ.get('PATH_INFO', ''))
-        if tiddlers.is_search and 'tiddlyweb.query.original' in self.environ:
-            title = 'Search for %s' % self.environ['tiddlyweb.query.original']
-        else:
-            title = tiddlers.title
-        revisions = tiddlers.is_revisions
-        routing_args = self.environ.get('wsgiorg.routing_args', ([], {}))[1]
+        if tiddlers_url.startswith('/tiddlers'):
+            tiddlers.link = '/tiddlers'
+
+        template_name = 'friendlytiddlers.html'
+        if '/bags/' in tiddlers.link or '/recipes/' in tiddlers.link:
+            template_name = 'tiddlers.html'
+
         container_name = ''
         container_type = 'bags'
         container_url = ''
         container_policy = False
         store = self.environ['tiddlyweb.store']
         user = self.environ['tiddlyweb.usersign']
-        if routing_args and not tiddlers.is_search:
-            if 'recipe_name' in routing_args:
-                name = get_route_value(self.environ, 'recipe_name')
+        space_name = ''
+        if not (tiddlers.is_search or tiddlers.is_revisions):
+            if tiddlers.recipe:
+                name = tiddlers.recipe
+                try:
+                    space_name = Space.name_from_recipe(name)
+                    tiddlers.title = 'Tiddlers in %s' % space_name
+                except ValueError:
+                    pass
+                container_url = '/recipes/%s' % name
                 container_name = 'Recipe %s' % name
                 container_type = 'recipes'
                 try:
                     store.get(Recipe(name)).policy.allows(user, 'read')
-                    container_url = '/recipes/%s' % name
                     container_policy = True
                 except PermissionsError:
                     pass
-            elif 'bag_name' in routing_args:
-                name = get_route_value(self.environ, 'bag_name')
+            elif tiddlers.bag:
+                name = tiddlers.bag
+                try:
+                    space_name = Space.name_from_recipe(name)
+                    tiddlers.title = 'Tiddlers in %s' % space_name
+                except ValueError:
+                    pass
                 container_url = '/bags/%s' % name
                 container_name = 'Bag %s' % name
                 try:
@@ -91,8 +103,10 @@ class Serialization(HTMLSerialization):
                 except PermissionsError:
                     pass
 
-            if revisions:
-                container_policy = True
+        if tiddlers.is_revisions:
+            container_policy = True
+            container_url = tiddlers.link.rsplit('/revisions')[0]
+            container_name = 'Head'
 
         try:
             query_string = self.environ.get('QUERY_STRING', '').decode('utf-8')
@@ -105,23 +119,29 @@ class Serialization(HTMLSerialization):
         if query_string:
             query_string = '?%s' % query_string
 
-        # chop off the possible trailing .html
-        tiddlers_url = tiddlers_url.rsplit('.html')[0]
+        if tiddlers.is_search:
+            template_name = 'search.html'
+            if 'tiddlyweb.query.original' in self.environ:
+                tiddlers.title = ('Search for %s'
+                        % self.environ['tiddlyweb.query.original'])
 
-        return send_template(self.environ, 'tiddlers.html', {
+        return send_template(self.environ, template_name, {
             'meta_keywords': 'tiddlers, tiddlyspace',
             'meta_description': 'A list of tiddlers on TiddlySpace',
-            'title': title,
+            'title': tiddlers.title,
             'tiddler_url': tiddler_url,
             'environ': self.environ,
-            'revisions': revisions,
-            'tiddlers_url': tiddlers_url.decode('utf-8', 'replace'),
+            'revisions': tiddlers.is_revisions,
+            'tiddlers_url': tiddlers.link,
+            'space_uri': space_uri,
+            'space_bag': space_bag,
             'query_string': query_string,
             'container_type': container_type,
             'container_name': container_name,
             'container_url': container_url,
             'container_policy': container_policy,
             'links': links,
+            'space_name': space_name,
             'tiddlers': tiddlers})
 
     def recipe_as(self, recipe):
@@ -161,6 +181,17 @@ class Serialization(HTMLSerialization):
         subsystem. Links to the tiddler in the wiki are
         provided.
         """
+        tiddlers_url = (self.environ.get('SCRIPT_NAME', '')
+                + self.environ.get('PATH_INFO', ''))
+
+        template_name = 'friendlytiddler.html'
+        if '/tiddlers/' in tiddlers_url:
+            template_name = 'tiddler.html'
+
+        revision = False
+        if '/revisions/' in tiddlers_url:
+            revision = True
+
         user = self.environ['tiddlyweb.usersign']
         store = self.environ['tiddlyweb.store']
         if tiddler.recipe:
@@ -169,12 +200,23 @@ class Serialization(HTMLSerialization):
         else:
             list_link = '/bags/%s/tiddlers' % encode_name(tiddler.bag)
             list_title = 'Tiddlers in Bag %s' % tiddler.bag
+        tiddlerurl = tiddler_url(self.environ, tiddler)
+        if revision:
+            list_link = '%s/%s/revisions' % (list_link,
+                    encode_name(tiddler.title))
+            list_title = 'Revisions of %s' % tiddler.title
+            tiddlerurl = '%s/revisions/%s' % (tiddlerurl,
+                    encode_name('%s' % tiddler.revision))
         try:
             store.get(Bag(tiddler.bag)).policy.allows(user, 'manage')
             container_policy = True
         except PermissionsError:
             container_policy = False
-        space_link = self._space_link(tiddler)
+        if not self.environ['tiddlyweb.space_settings'].get('index', None):
+            space_link, space_name = self._space_link(tiddler)
+        else:
+            space_link = ''
+            space_name = ''
         try:
             modifier_link = space_uri(self.environ, tiddler.modifier)
         except AttributeError:
@@ -184,8 +226,15 @@ class Serialization(HTMLSerialization):
         except AttributeError:
             creator_link = ""
 
+        links = self.environ.get('tiddlyweb.config',
+                {}).get('extension_types', {}).keys()
+
+        def call_space_uri(tiddler):
+            space_name = tiddler.recipe.split('_', 1)[0]
+            return space_uri(self.environ, space_name)
+
         html = render_wikitext(tiddler, self.environ)
-        return send_template(self.environ, 'tiddler.html', {
+        return send_template(self.environ, template_name, {
             'meta_keywords': ', '.join(tiddler.tags),
             'meta_description': tiddler.title,
             'title': '%s' % tiddler.title,
@@ -197,28 +246,32 @@ class Serialization(HTMLSerialization):
             'list_link': list_link,
             'list_title': list_title,
             'space_link': space_link,
+            'space_name': space_name,
+            'space_uri': call_space_uri,
             'tiddler': tiddler,
             'container_policy': container_policy,
-            'tiddler_url': tiddler_url(self.environ, tiddler)})
+            'links': links,
+            'tiddler_url': tiddlerurl})
 
     def _space_link(self, tiddler):
         """
         Create a link back to this tiddler in its space.
         """
         if tiddler.recipe:
+            space_name = tiddler.recipe.split('_', 1)[0]
             link = _encode_space_link(tiddler)
-        elif _space_bag(tiddler.bag):
+        elif space_bag(tiddler.bag):
             space_name = tiddler.bag.split('_', 1)[0]
             space_link_uri = space_uri(self.environ, space_name).rstrip('/')
             link = _encode_space_link(tiddler)
             link = '%s%s' % (space_link_uri, link)
         else:
-            return ''
+            return '', ''
 
-        return '%s%s' % (self._server_prefix(), link)
+        return '%s%s' % (self._server_prefix(), link), space_name
 
 
-def _space_bag(bag_name):
+def space_bag(bag_name):
     """
     Return true if the bag is a standard space bag. If it is
     there will be a space link.

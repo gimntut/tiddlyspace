@@ -32,8 +32,6 @@ def setup_module(module):
     module.http = httplib2.Http()
     TESTS = yaml.load(open('../test/httptest.yaml'))
 
-def teardown_module(module):
-    os.chdir('..')
 
 def test_assert_response():
     """

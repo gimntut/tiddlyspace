@@ -1,0 +1,486 @@
+type: text/css
+
+.autocompleteLink img {
+	margin-right: 8px;
+}
+
+.iframeMode .app-picker {
+	display: none !important;
+}
+
+.ts-nonmember .delete {
+	display: none;
+}
+
+#upload {
+    display: none;
+}
+
+.ts-member #upload {
+    display: block;
+}
+
+.ts-membership {
+	display: none;
+}
+
+.ts-member .ts-membership {
+	display: block;
+}
+
+.ts-identities li,
+.ts-includes li,
+.ts-space-search li,
+.ts-members li {
+	font-size: 16px;
+	line-height: 2em;
+}
+
+.ts-members,
+.ts-includes {
+	padding: 0;
+}
+
+.ts-members li,
+.ts-includes li {
+	list-style: none;
+	margin: 0 1em;
+	position: relative;
+}
+
+.ts-members li button,
+.ts-includes li button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	background: transparent;
+	color: #E0BCB2;
+	font-size: 1em;
+	line-height: 2em;
+}
+
+.ts-members li button:hover,
+.ts-includes li button:hover {
+	color: #fff;
+}
+
+.ts-members li button:hover,
+.ts-includes li:hover button {
+	color: #AF2800;
+}
+
+.list-container {
+	display: none;
+}
+
+#header h2 {
+	text-align: center;
+}
+
+#siteinfo {
+	position: relative;
+}
+
+#siteinfo textarea {
+	display: block;
+	width: 100%;
+	height: 200px;
+}
+
+#siteinfo .edit {
+	right: 50px;
+	top: -40px;
+	color: white;
+	_color: black; /* ie6 hack */
+	position: absolute;
+}
+
+.siteicon {
+	/* ie6 hacks */
+	width: expression(48 + "px");
+	height: expression(48 + "px");
+	max-width: 48px;
+	max-height: 48px;
+	border: solid 2px #333;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	-o-border-radius: 5px;
+	-ms-border-radius: 5px;
+	border-radius: 5px;
+	border-image: initial;
+}
+
+.help {
+	background-image: url(/bags/common/tiddlers/help.png);
+	background-repeat: no-repeat;
+	text-indent: -999px;
+	overflow: hidden;
+	width: 16px;
+	height: 16px;
+	display: inline-block;
+}
+
+#container {
+	width: 90%;
+	margin: 0 auto;
+}
+
+h1 {
+	margin-top: 0;
+}
+
+body {
+	font-size: 1.1em;
+}
+
+html {
+	background: none;
+}
+
+input[type=submit],
+.button,
+button {
+	text-decoration: underline;
+	margin-bottom: 1em;
+	background: #CCC;
+	color: #888;
+	cursor: pointer;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: bold;
+	height: 30px;
+	line-height: 30px;
+	padding: 0 10px;
+	text-align: center;
+	text-shadow: rgba(0, 0, 0, .1) 0 -1px 0;
+	text-transform: uppercase;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	display: inline-block;
+	background: #D0D5D6;
+	color: #F0F4F8;
+	border-radius: 4px;
+	padding: 0 0.7em;
+	text-decoration: none;
+	-webkit-transition: all 0.4s ease-in-out;
+	-moz-transition: all 0.4s ease-in-out;
+	-o-transition: all 0.4s ease-in-out;
+	-ms-transition: all 0.4s ease-in-out;
+	transition: all 0.4s ease-in-out;
+	border: none;
+}
+
+.toggleNext {
+	margin-left: 16px;
+	background: url(down_tsgrey.png) no-repeat;
+	position: absolute;
+	right: 24px;
+	top: 50%;
+	margin-top: -12px;
+	width: 24px;
+	height: 24px;
+}
+
+.toggleNext.open {
+	background: url(up_tsgrey.png) no-repeat;
+}
+
+input[type=submit]:hover,
+.button:hover,
+button:hover {
+	background: #0082AF;
+}
+
+button.toggleNext:hover {
+	background: url(down_tsblue.png) no-repeat;
+}
+
+button.toggleNext.open:hover {
+	background: url(up_tsblue.png) no-repeat;
+}
+
+input[disabled=disabled]:hover,
+button[disabled=disabled]:hover {
+	background: #c4c6c7;
+}
+
+a:hover {
+	color: #E56AA0;
+}
+
+textarea,
+.inputBox {
+	padding-right: 170px;
+	margin-bottom: 0.25em;
+	font-size: 1.3em;
+	background:rgba(0, 0, 0, 0.5);
+	-moz-box-shadow:inset 2px 2px 3px rgba(26,30,31,0.5);
+	-webkit-box-shadow:inset 2px 2px 3px rgba(26,30,31,0.5);
+	-o-box-shadow:inset 2px 2px 3px rgba(26,30,31,0.5);
+	-ms-box-shadow:inset 2px 2px 3px rgba(26,30,31,0.5);
+	box-shadow:inset 2px 2px 3px rgba(26,30,31,0.5);
+	padding: 0.3em 0.5em;
+	outline: none;
+	border: none;
+	border-radius: 4px;
+	_border: dotted 1px #ccc;
+}
+
+.inputBox:focus {
+	background: rgba(255,255,255,0.7);
+}
+
+.ts-password input {
+	display: block;
+}
+
+a {
+	color: #BC4378;
+	-webkit-transition: color 0.4s linear;
+	-moz-transition: color 0.4s linear;
+	-o-transition: color 0.4s linear;
+	-ms-transition: color 0.4s linear;
+	transition: color 0.4s linear;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.main {
+	color: #596A73;
+	font-family: "helvetica neue", helvetica, georgia;
+	background: #F0F4F8;
+}
+
+h1,h2,h3,h4,h5 {
+	color: #4C4A54;
+}
+
+h2 {
+	position: relative;
+	padding-right: 48px;
+}
+
+.left {
+	position: relative;
+	width: 48%;
+	float: left;
+	border-right: solid 1px #CCC;
+	padding-right: 2%;
+}
+
+.right {
+	position: relative;
+	float: left;
+	width: 46%; /* firefox doesn't render correctly when this is 47% */
+	padding-left: 3%;
+	border-left: solid 1px #CCC;
+	margin-left: -1px;
+}
+
+.clear {
+	clear:both;
+}
+
+#text-html {
+	box-shadow: 1px 2px 3px 0px rgba(0,0,0,0.25), -1px 0px 3px 0px rgba(0,0,0,0.25);
+}
+
+a.app {
+	z-index: 2;
+	background: #D0D5D6;
+	color: #F0F4F8;
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	padding: 0 0.7em;
+	text-decoration: none;
+	-webkit-transition: all 0.4s ease-in-out;
+	-moz-transition: all 0.4s ease-in-out;
+	-o-transition: all 0.4s ease-in-out;
+	-ms-transition: all 0.4s ease-in-out;
+	transition: all 0.4s ease-in-out;
+	font-size: 1.3em;
+	line-height: 38px;
+}
+
+a.app:hover {
+	background: #0082AF;
+}
+
+.iframeMode a.app {
+	display: none;
+}
+
+.iframeMode #container {
+	padding: 0;
+	max-width: none;
+	width: 100%;
+}
+
+#upload .btn {
+	margin: 0.2em 0;
+}
+
+#dropzone {
+	display: none;
+}
+
+.ts-member #dropzone {
+	display: block;
+}
+
+#dropzone {
+	border: 3px dashed #fff;
+	height: 50px;
+	text-align: center;
+	color: #ccc;
+	line-height: 50px;
+	font-size: 1.2em;
+}
+
+.dragging #dropzone {
+	border: 3px dashed #0082af;
+	color: #0082af;
+}
+
+#dropzone .notloading {
+	display: none;
+}
+
+/* notification area styles */
+
+.messageArea {
+	padding: 10px;
+	border: solid 1px #CCC;
+	border-radius: 2px;
+	background-color: #EEE;
+	margin-bottom: 0.25em;
+	position: relative;
+}
+
+.messageArea .close-btn {
+	position: absolute;
+	top: -.25em;
+	right: -.25em;
+	font-size: 16px;
+	line-height: 20px;
+	background: transparent;
+	color: #596A73;
+	visibility: hidden;
+}
+
+.messageArea:hover .close-btn {
+	visibility: visible;
+}
+
+.messageArea p {
+	margin: 0;
+	line-height: 1.4em;
+}
+
+.messageArea a {
+	cursor: pointer;
+}
+
+.spacereset {
+	margin-top: 26px;
+}
+
+.resetcomplete {
+	background: green;
+}
+
+.reset-confirm-wrap {
+	position: relative;
+}
+
+.reset-confirm-wrap .close-btn {
+	top: -.5em;
+	right: -.5em;
+	visibility: visible;
+}
+
+.reset-confirm-wrap label {
+	font-weight: bold;
+}
+
+.reset-confirm-wrap form {
+	margin-top: 10px;
+}
+
+.reset-confirm-wrap form button {
+	float: right;
+	margin-bottom: 0;
+	background: #AF1404;
+}
+
+.reset-message-area {
+	position: absolute;
+	top: 0; bottom: 0;
+	right: 0; left: 0;
+	background: rgba(0,0,0,0.1);
+	visibility: hidden;
+	text-align: center;
+	color: #F0F4F8;
+	font-size: 2em;
+	padding: 14px;
+}
+
+.reset-message-area p {
+	line-height: 77px;
+	display: none;
+}
+
+.inaction .reset-message-area {
+	visibility: visible;
+	background: #0082AF;
+}
+
+.resetcomplete .reset-message-area {
+	background: #00B041;
+	visibility: visible;
+}
+
+.error.messageArea {
+	border-color: #AF1404;
+	background: rgba(175,20,4,0.1);
+}
+
+/* should check if box-sizing available */
+.reset-confirm-input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.error .reset-confirm-input {
+	color: #AF1404;
+}
+
+.reset-message-area  p.recipe-error-msg {
+	font-size: 14px;
+	line-height: 38px;
+	background: #AF1404;
+}
+
+/* micro clearfix */
+.cf:before,
+.cf:after {
+	content: " ";
+	display: table;
+}
+
+.cf:after {
+	clear: both;
+}
+
+/* For IE 6/7 only */
+.cf {
+	*zoom: 1;
+}
+
+@media (max-width:600px) {
+	.left, .right {
+		float: none;
+		width: 100%;
+	}
+}

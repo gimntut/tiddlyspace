@@ -4,20 +4,22 @@ structure and contents of a default TiddlySpace instance
 
 from copy import deepcopy
 
-from tiddlywebplugins.instancer.util import get_tiddler_locations
-
-from tiddlywebwiki.instance import (instance_config, store_contents,
-    store_structure)
+from tiddlywebwiki.instance import (instance_config,
+        store_structure as tiddlywebwiki_store_structure)
 
 from tiddlywebplugins.prettyerror.instance import (
-         store_contents as prettyerror_store_contents,
-         store_structure as prettyerror_store_structure)
+        store_structure as prettyerror_store_structure)
 
 from tiddlywebplugins.tiddlyspace.space import Space
 
+store_contents = {}
+store_structure = {}
 
-store_contents.update(get_tiddler_locations(
-    prettyerror_store_contents, 'tiddlywebplugins.prettyerror'))
+# adjust for tiddlywebwiki
+store_structure['bags'] = tiddlywebwiki_store_structure['bags']
+store_structure['recipes'] = tiddlywebwiki_store_structure['recipes']
+
+# adjust for prettyerror
 store_structure['bags'].update(prettyerror_store_structure['bags'])
 store_structure['recipes'].update(prettyerror_store_structure['recipes'])
 store_contents['_errors'] = ['src/errors/index.recipe']
@@ -27,11 +29,14 @@ instance_config['twanager_plugins'] = ['tiddlywebplugins.tiddlyspace']
 
 store_contents['common'] = ['src/common.recipe']
 store_contents['tiddlyspace'] = ['src/tiddlyspace.recipe']
-store_contents['system-info_public'] = ['src/system-info/index.recipe']
-store_contents['system-plugins_public'] = ['src/system-plugins/index.recipe']
-store_contents['system-theme_public'] = ['src/system-theme/index.recipe']
-store_contents['system-images_public'] = ['src/system-images/index.recipe']
-store_contents['frontpage_public'] = ['src/frontpage/index.recipe']
+store_contents['system-info_public'] = ['src/system-info_public/index.recipe']
+store_contents['system-plugins_public'] = [
+    'src/system-plugins_public/index.recipe']
+store_contents['system-theme_public'] = [
+    'src/system-theme_public/index.recipe']
+store_contents['system-images_public'] = [
+    'src/system-images_public/index.recipe']
+store_contents['frontpage_public'] = ['src/frontpage_public/index.recipe']
 
 store_structure['bags']['common']['policy'] = \
     store_structure['bags']['system']['policy']
@@ -39,6 +44,19 @@ store_structure['bags']['common']['policy'] = \
 store_structure['bags']['tiddlyspace'] = {
     'desc': 'TiddlySpace client',
     'policy': store_structure['bags']['system']['policy'],
+}
+
+store_structure['bags']['notifications'] = {
+    'desc': 'System wide global notifications',
+    'policy': {
+        'read': [],
+        'write': ['R:NOTIFIER'],
+        'create': ['R:NOTIFIER'],
+        'delete': ['R:NOTIFIER'],
+        'manage': ['R:NOTIFIER'],
+        'accept': ['NONE'],
+        'owner': 'administrator',
+    },
 }
 
 store_structure['recipes']['default']['recipe'].insert(1, ('tiddlyspace', ''))

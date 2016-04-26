@@ -7,19 +7,25 @@ import logging
 import urllib
 import urllib2
 
+from httpexceptor import HTTP404, HTTP400, HTTP415
+
 from tiddlyweb.control import readable_tiddlers_by_bag
 from tiddlyweb.store import StoreError, NoUserError
 from tiddlyweb.model.tiddler import Tiddler
 from tiddlyweb.model.user import User
+from tiddlyweb.wikitext import render_wikitext
 from tiddlyweb.web.handler.search import get as search
-from tiddlyweb.web.http import HTTP404, HTTP400, HTTP415
 from tiddlyweb.web.util import (server_host_url, encode_name,
-        get_serialize_type, tiddler_url)
+        get_serialize_type, tiddler_url, get_route_value)
+
+from tiddlywebplugins.utils import get_store
+
 from tiddlywebplugins.tiddlyspace.spaces import space_uri
 from tiddlywebplugins.tiddlyspace.web import determine_host
-from tiddlyweb.wikitext import render_wikitext
-from tiddlywebplugins.utils import get_store
 from tiddlywebplugins.tiddlyspace.template import send_template
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def add_profile_routes(selector):
@@ -54,7 +60,7 @@ def atom_profile(environ, start_response):
     Send the atom profile, which is actually a search
     for tiddlers modified by the user.
     """
-    username = environ['wsgiorg.routing_args'][1]['username']
+    username = get_route_value(environ, 'username')
     search_string = _search_string(username)
     environ['tiddlyweb.query']['q'] = [search_string]
     return search(environ, start_response)
@@ -66,13 +72,14 @@ def html_profile(environ, start_response):
     their profile from their space, and their most recently
     modified tiddlers.
     """
-    username = environ['wsgiorg.routing_args'][1]['username']
+    username = get_route_value(environ, 'username')
     usersign = environ['tiddlyweb.usersign']
 
     store = environ['tiddlyweb.store']
 
+    # Confirm username is a real User
     try:
-        _ = store.get(User(username))
+        store.get(User(username))
     except NoUserError:
         raise HTTP404('Profile not found for %s' % username)
 
@@ -96,6 +103,7 @@ def html_profile(environ, start_response):
 
     return send_template(environ, 'tsprofile.html', {
         'css': ['/bags/common/tiddlers/profile.css'],
+        'title': 'Profile for %s' % username,
         'username': username,
         'activity_feed': activity_feed,
         'avatar_path': avatar_path,
@@ -203,7 +211,7 @@ try:
                     'hub.mode': 'publish',
                     'hub.url': profile_atom_url(
                         {'tiddlyweb.config': self.config}, user),
-                    }
+            }
 
             try:
                 target = self.config['atom.hub']
@@ -214,20 +222,20 @@ try:
             try:
                 response = urllib2.urlopen(target, encoded_data)
                 status = response.getcode()
-                logging.warn('sent %s to %s got %s',
+                LOGGER.warn('sent %s to %s got %s',
                         encoded_data, target, status)
-                if status != '204':
-                    logging.warn('non 204 response from hub: %s', status)
+                if status != 204:
+                    LOGGER.warn('non 204 response from hub: %s', status)
             except urllib2.HTTPError, exc:
                 if exc.code != 204:
-                    logging.warn(
+                    LOGGER.warn(
                             'urlopen errored with %s when publishing to hub',
                             exc)
             except urllib2.URLError, exc:
-                logging.warn(
+                LOGGER.warn(
                         'urlopen errored with %s when publishing to hub', exc)
             except AttributeError, exc:
-                logging.warn('error when publishing to hub: %s, %s',
+                LOGGER.warn('error when publishing to hub: %s, %s',
                         exc, response.info())
 except ImportError:
     pass

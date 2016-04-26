@@ -22,9 +22,6 @@ def setup_module(module):
     make_fake_space(module.store, 'cdent')
     module.store.put(User('cdent'))
 
-def teardown_module(module):
-    import os
-    os.chdir('..')
 
 def test_for_meta():
     response, content = http.request('http://0.0.0.0:8080/.well-known/host-meta')
@@ -63,7 +60,8 @@ def test_get_profile_html():
     assert response['status'] == '404', content
 
     tiddler = Tiddler('profile', 'cdent_public')
-    tiddler.text = '!Hello There'
+    tiddler.text = '#Hello There\n[[monkey]]'
+    tiddler.type = 'text/x-markdown'
     tiddler.modifier = 'cdent'
     store.put(tiddler)
 
@@ -71,7 +69,10 @@ def test_get_profile_html():
     assert response['status'] == '200', content
 
     assert 'Hello There' in content
-    assert '/cdent_public/tiddlers/profile' in content
+    assert 'http://cdent.0.0.0.0:8080/profile' in content
+    assert '<li><a href="http://cdent.0.0.0.0:8080/profile">profile</a></li>' in content
+    assert '<base href="http://cdent.0.0.0.0:8080/"' in content
+    assert '<p><a class="wikilink" href="monkey">monkey</a></p>' in content
 
     response, content = http.request('http://cdent.0.0.0.0:8080/profiles/cdent')
     assert response['status'] == '404', content

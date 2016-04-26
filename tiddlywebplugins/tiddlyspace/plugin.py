@@ -4,15 +4,15 @@ Initialize tiddlyspace as a tiddlyweb plugin.
 
 from tiddlyweb.util import merge_config
 
-from tiddlywebplugins.instancer.util import get_tiddler_locations
+from tiddlywebplugins.utils import remove_handler
 
 from tiddlywebplugins.tiddlyspace.commands import establish_commands
 from tiddlywebplugins.tiddlyspace.config import config as space_config
-from tiddlywebplugins.tiddlyspace.instance import store_contents
 from tiddlywebplugins.tiddlyspace.www import establish_www
 
 
 def init_plugin(config):
+    import tiddlywebplugins.whoosher
     import tiddlywebwiki
     import tiddlywebplugins.logout
     import tiddlywebplugins.virtualhosting  # calling init not required
@@ -23,7 +23,6 @@ def init_plugin(config):
     import tiddlywebplugins.cookiedomain
     import tiddlywebplugins.tiddlyspace.validator
     import tiddlywebplugins.prettyerror
-    import tiddlywebplugins.pathinfohack
     import tiddlywebplugins.hashmaker
     import tiddlywebplugins.form
     import tiddlywebplugins.reflector
@@ -45,6 +44,7 @@ def init_plugin(config):
         from werkzeug.contrib.profiler import ProfilerMiddleware
         config['server_request_filters'].insert(0, ProfilerMiddleware)
 
+    tiddlywebplugins.whoosher.init(config)
     tiddlywebwiki.init(config)
     tiddlywebplugins.logout.init(config)
     tiddlywebplugins.magicuser.init(config)
@@ -53,7 +53,6 @@ def init_plugin(config):
     tiddlywebplugins.oom.init(config)
     tiddlywebplugins.cookiedomain.init(config)
     tiddlywebplugins.prettyerror.init(config)
-    tiddlywebplugins.pathinfohack.init(config)
     tiddlywebplugins.hashmaker.init(config)
     tiddlywebplugins.form.init(config)
     tiddlywebplugins.reflector.init(config)
@@ -64,22 +63,18 @@ def init_plugin(config):
         tiddlywebplugins.dispatcher.init(config)
         tiddlywebplugins.dispatcher.listener.init(config)
 
-    # XXX: The following is required to work around issues with twp.instancer.
-    # Without this, config settings from tiddlywebwiki take precedence.
-    config['serializers']['text/x-tiddlywiki'] = space_config[
-            'serializers']['text/x-tiddlywiki']
-    # This only fixes 'twanager update', instance creation still does not have
-    # the right information, thus requiring a twanager update after instance
-    # creation. Presumably the instance script needs to do something similar.
-    config['instance_tiddlers'] = get_tiddler_locations(store_contents,
-            'tiddlywebplugins.tiddlyspace')
+    # reset config _again_ to deal with any adjustments from the
+    # above init calls
+    merge_config(config, space_config)
 
     # When tiddlyspace.frontpage_installed is True, don't update
     # the frontpage_public bag, thus not overwriting what's there.
     if config.get('tiddlyspace.frontpage_installed', False):
-        config['instance_tiddlers']['frontpage_public'] = []
+        config['pkgstore.skip_bags'] = ['frontpage_public']
 
     if 'selector' in config:  # system plugin
+        # remove friendlywiki
+        remove_handler(config['selector'], '/{recipe_name:segment}')
         establish_www(config)
 
     # update html serialization

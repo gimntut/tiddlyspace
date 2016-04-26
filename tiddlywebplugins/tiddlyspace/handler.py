@@ -11,17 +11,19 @@ try:
 except ImportError:
     from cgi import parse_qs
 
+from httpexceptor import HTTP403
+
 from tiddlyweb.filters import parse_for_filters
 from tiddlyweb.model.bag import Bag
 from tiddlyweb.store import NoBagError
 from tiddlyweb import control
 from tiddlyweb.web.handler.recipe import get_tiddlers
 from tiddlyweb.web.handler.tiddler import get as get_tiddler
-from tiddlyweb.web.http import HTTP403
-from tiddlyweb.web.util import get_serialize_type
+from tiddlyweb.web.util import get_serialize_type, get_route_value
 
 from tiddlywebplugins.utils import require_any_user
 
+from tiddlywebplugins.tiddlyspace.space import Space
 from tiddlywebplugins.tiddlyspace.web import (determine_host,
         determine_space, determine_space_recipe)
 
@@ -44,7 +46,7 @@ def get_identities(environ, start_response):
     user must be an admin.
     """
     store = environ['tiddlyweb.store']
-    username = environ['wsgiorg.routing_args'][1]['username']
+    username = get_route_value(environ, 'username')
     usersign = environ['tiddlyweb.usersign']['name']
     roles = environ['tiddlyweb.usersign']['roles']
 
@@ -73,10 +75,31 @@ def get_space_tiddlers(environ, start_response):
     based on membership status.
     """
     _setup_friendly_environ(environ)
-    serializer, _ = get_serialize_type(environ)
-
     _extra_query_update(environ)
 
+    ext = environ.get('tiddlyweb.extension')
+    types = environ['tiddlyweb.config']['extension_types']
+
+    # If not a wiki, limit the tiddlers
+    if 'text/x-tiddlywiki' not in environ['tiddlyweb.type']:
+        # If sort filter not set, sort by -modified
+        filter_types = [filter[1][0]
+                for filter in environ['tiddlyweb.filters']]
+        if 'sort' not in filter_types:
+            environ['tiddlyweb.filters'] = parse_for_filters(
+                    'sort=-modified', environ)[0] + environ['tiddlyweb.filters']
+
+        # Filter out core bags.
+        core_bag_filters = []
+        for bag in Space.core_bags():
+            core_bag_filters.append('select=bag:!%s' % bag)
+        core_bag_filters = parse_for_filters(';'.join(core_bag_filters),
+                environ)[0]
+        environ['tiddlyweb.filters'] = (core_bag_filters
+                + environ['tiddlyweb.filters'])
+
+    if ext and ext not in types:
+        environ['wsgiorg.routing_args'][1]['recipe_name'] += '.%s' % ext
     return get_tiddlers(environ, start_response)
 
 
@@ -91,7 +114,6 @@ def home(environ, start_response):
     if http_host == host_url:
         http_host = 'frontpage.' + http_host
     return serve_space(environ, start_response, http_host)
-
 
 
 def serve_space(environ, start_response, http_host):

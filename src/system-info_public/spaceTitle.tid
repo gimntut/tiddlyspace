@@ -1,0 +1,7 @@
+modifier: osmosoft
+type: None
+tags: excludeLists excludeSearch
+
+The title and subtitle of your space are visible to visitors and are also displayed in your browser's tabs. Click on the SiteTitle and SiteSubtitle tiddler links below to make changes.
+* [[SiteTitle]]
+* [[SiteSubtitle]]

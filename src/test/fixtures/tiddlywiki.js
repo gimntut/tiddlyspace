@@ -78,7 +78,7 @@ Tiddler.prototype.isTouched = function() {
 };
 Tiddler.prototype.isTagged = function(tag)
 {
-	return this.tags.indexOf(tag) != -1;
+	return $.inArray(tag, this.tags) != -1;
 };
 TiddlyWiki = function() {
 	this._tiddlers = {};
@@ -154,18 +154,25 @@ TiddlyWiki.prototype.isShadowTiddler = function(title) {
 	return config.shadowTiddlers[title] === undefined ? false : true;
 };
 
+TiddlyWiki.prototype.getShadowTiddlerText = function(title)
+{
+	if(typeof config.shadowTiddlers[title] == "string")
+		return config.shadowTiddlers[title];
+	else
+		return "";
+};
+
 Array.prototype.contains = function(item)
 {
-	return this.indexOf(item) != -1;
+	return $.inArray(item, this) != -1;
 };
 
 Array.prototype.pushUnique = function(item,unique)
 {
 	if(unique === false) {
 		this.push(item);
-	} else {
-		if(this.indexOf(item) == -1)
-			this.push(item);
+	} else if($.inArray(item, this) == -1) {
+        this.push(item);
 	}
 };
 

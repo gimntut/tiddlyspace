@@ -22,9 +22,7 @@ class Space(object):
     and recipes can be deduced.
     """
 
-    ASSOCIATED_BAG_MAP = [
-            'archive',
-            ]
+    ASSOCIATED_BAG_MAP = ['archive']
 
     CORE_RECIPE = [
         ('system', ''),
@@ -33,21 +31,15 @@ class Space(object):
         ('system-info_public', ''),
         ('system-images_public', ''),
         ('system-theme_public', ''),
-        ]
+    ]
 
     def __init__(self, name):
         """
         Name must be plain ascii and match SPACE_NAME_PATTERN.
         """
-        try:
-            name = str(name)
-        except UnicodeEncodeError:
-            raise ValueError('Invalid space name, ascii required: %s' %
-                name.encode('UTF-8'))
         if not SPACE_NAME_PATTERN.match(name):
             raise ValueError(
-                    'Invalid space name, must be valid host name (RFC 1035)' +
-                    ': %s' % name)
+                    'Invalid space name, must be valid host name (RFC 1035)')
         self.name = name
 
     def extra_bags(self):
@@ -158,6 +150,11 @@ class Space(object):
         Given a recipe name determine if it is private.
         """
         return cls._is_private(recipe_name)
+
+    @staticmethod
+    def core_bags():
+        for bag, filter in Space.CORE_RECIPE:
+            yield bag
 
     @staticmethod
     def _is_private(name):

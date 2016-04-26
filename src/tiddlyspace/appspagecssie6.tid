@@ -1,0 +1,12 @@
+title: appspageie6.css
+type: text/css
+tags: excludeLists excludeSearch
+modifier: osmosoft
+
+#container {
+   height:100%;
+}
+
+#app-list li a img {
+	position: static;
+}

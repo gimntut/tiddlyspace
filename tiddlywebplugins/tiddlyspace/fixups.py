@@ -2,8 +2,9 @@
 Override behaviors from other modules.
 """
 
+from httpexceptor import HTTP404
+
 import tiddlyweb.web.util
-from tiddlyweb.web.http import HTTP404
 import tiddlywebplugins.status
 
 from tiddlywebplugins.tiddlyspace.space import Space
@@ -53,7 +54,8 @@ def _status_gather_data(environ):
 tiddlywebplugins.status._gather_data = _status_gather_data
 
 
-def web_tiddler_url(environ, tiddler, container='bags', full=True):
+def web_tiddler_url(environ, tiddler, container='bags', full=True,
+        friendly=False):
     """
     Override default tiddler_url to be space+host aware.
 
@@ -67,9 +69,6 @@ def web_tiddler_url(environ, tiddler, container='bags', full=True):
     the server_host domain. If/when auxbags are made to work this
     will need to be reviewed.
     """
-    if '_canonical_uri' in tiddler.fields:
-        return tiddler.fields['_canonical_uri']
-
     saved_host = environ.get('HTTP_HOST', '')
     try:
         if container == 'recipes':
@@ -77,7 +76,7 @@ def web_tiddler_url(environ, tiddler, container='bags', full=True):
         else:
             space_name = Space.name_from_bag(tiddler.bag)
         space_name = space_name + '.'
-    except ValueError, exc:
+    except ValueError:
         space_name = ''
 
     host = environ['tiddlyweb.config']['server_host']['host']
@@ -89,7 +88,11 @@ def web_tiddler_url(environ, tiddler, container='bags', full=True):
     environ['HTTP_HOST'] = '%s%s%s' % (space_name.encode('utf-8'),
         host, port)
 
-    url = original_tiddler_url(environ, tiddler, container, full)
+    if friendly and space_name:
+        url = '%s/%s' % (tiddlyweb.web.util.server_base_url(environ),
+                tiddlyweb.web.util.encode_name(tiddler.title))
+    else:
+        url = original_tiddler_url(environ, tiddler, container, full)
     if saved_host:
         environ['HTTP_HOST'] = saved_host
     elif 'HTTP_HOST' in environ:

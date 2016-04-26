@@ -6,13 +6,14 @@ TiddlySpace instantiation script
 
 import sys
 try:
+    import pkg_resources
     import mangler
 except ImportError:
     pass
 
 from tiddlyweb.util import std_error_message
 
-from tiddlywebplugins.instancer.util import spawn
+from tiddlywebplugins.imaker import spawn
 
 from tiddlywebplugins.tiddlyspace import instance as instance_module
 from tiddlywebplugins.tiddlyspace.config import config as init_config
